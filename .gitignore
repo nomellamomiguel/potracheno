@@ -151,6 +151,11 @@ activemq-data/
 .env
 .envrc
 .venv
+
+# potracheno: локальные данные и файл БД
+data/
+*.db
+*.sqlite
 env/
 venv/
 ENV/
