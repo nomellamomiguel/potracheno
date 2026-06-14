@@ -88,6 +88,33 @@ async def clear_pending_reminders(session: AsyncSession, payment_id: int) -> Non
     )
 
 
+async def delete_reminders_for_payment(session: AsyncSession, payment_id: int) -> None:
+    """Удаляет ВСЕ напоминания платежа (и отправленные, и ожидающие)."""
+    await session.execute(
+        sa_delete(ReminderLog).where(ReminderLog.payment_id == payment_id)
+    )
+
+
+async def reset_user_data(session: AsyncSession, user: User) -> int:
+    """Полный сброс: удаляет все платежи пользователя (с напоминаниями) и его настройки.
+
+    Возвращает число удалённых платежей. Затрагивает только данные этого user.id.
+    """
+    payments = await list_payments(
+        session,
+        user.id,
+        statuses=(PaymentStatus.active, PaymentStatus.paused, PaymentStatus.archived),
+    )
+    for payment in payments:
+        await delete_reminders_for_payment(session, payment.id)  # сначала напоминания
+        await delete_payment(session, payment)                   # затем сам платёж
+    user.onboarded = False
+    user.tz = "Europe/Moscow"
+    user.notify_time = dt.time(10, 0)
+    await session.flush()
+    return len(payments)
+
+
 async def existing_offsets(
     session: AsyncSession, payment_id: int, due_date: dt.date
 ) -> set[int]:

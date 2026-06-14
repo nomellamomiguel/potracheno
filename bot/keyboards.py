@@ -235,7 +235,16 @@ def settings_kb() -> InlineKeyboardMarkup:
     b = InlineKeyboardBuilder()
     b.button(text="🕒 Часовой пояс", callback_data=SettingsCB(field="tz"))
     b.button(text="⏰ Время напоминаний", callback_data=SettingsCB(field="time"))
+    b.button(text="🗑 Сбросить всё и начать заново", callback_data=SettingsCB(field="reset"))
     b.button(text="⬅️ Меню", callback_data=Nav(action="menu"))
+    b.adjust(1)
+    return b.as_markup()
+
+
+def reset_confirm_kb() -> InlineKeyboardMarkup:
+    b = InlineKeyboardBuilder()
+    b.button(text="✅ Да, сбросить всё", callback_data=SettingsCB(field="reset_confirm"))
+    b.button(text="Отмена", callback_data=Nav(action="settings"))
     b.adjust(1)
     return b.as_markup()
 

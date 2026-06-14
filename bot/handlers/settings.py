@@ -12,8 +12,14 @@ from aiogram.types import CallbackQuery, Message
 from bot import texts
 from bot.callbacks import CityCB, Nav, SettingsCB, TimeCB
 from bot.db import repo
-from bot.db.models import User
-from bot.keyboards import back_to_menu_kb, notify_time_kb, settings_kb, tz_kb
+from bot.db.models import PaymentStatus, User
+from bot.keyboards import (
+    back_to_menu_kb,
+    notify_time_kb,
+    reset_confirm_kb,
+    settings_kb,
+    tz_kb,
+)
 from bot.services import reminders as rsvc
 from bot.services.dates import parse_time
 from bot.services.timezones import CITY_TZ, resolve_tz
@@ -49,6 +55,33 @@ async def cmd_settings(message: Message, state: FSMContext) -> None:
 async def nav_settings(cb: CallbackQuery, state: FSMContext) -> None:
     await state.clear()
     await _show_menu(cb)
+
+
+@router.callback_query(SettingsCB.filter(F.field == "reset"))
+async def reset_prompt(cb: CallbackQuery, state: FSMContext, session, user: User) -> None:
+    await state.clear()
+    payments = await repo.list_payments(
+        session,
+        user.id,
+        statuses=(PaymentStatus.active, PaymentStatus.paused, PaymentStatus.archived),
+    )
+    text = texts.RESET_CONFIRM.format(count=len(payments))
+    try:
+        await cb.message.edit_text(text, reply_markup=reset_confirm_kb())
+    except TelegramBadRequest:
+        await cb.message.answer(text, reply_markup=reset_confirm_kb())
+    await cb.answer()
+
+
+@router.callback_query(SettingsCB.filter(F.field == "reset_confirm"))
+async def reset_confirm(cb: CallbackQuery, state: FSMContext, session, user: User) -> None:
+    await state.clear()
+    await repo.reset_user_data(session, user)
+    try:
+        await cb.message.edit_text(texts.RESET_DONE)
+    except TelegramBadRequest:
+        await cb.message.answer(texts.RESET_DONE)
+    await cb.answer()
 
 
 @router.callback_query(SettingsCB.filter(F.field == "tz"))
