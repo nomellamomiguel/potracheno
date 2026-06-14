@@ -116,6 +116,7 @@ STATUS_MONTH_TITLE = "📅 В этом месяце:"
 STATUS_YEAR_TITLE = "📅 За 12 месяцев:"
 STATUS_EMPTY = "На этот период платежей нет."
 STATUS_TOTALS = "Итого: {totals}"
+STATUS_PAYMENTS = "Платежи: {names}"
 NEAREST_NONE = "Ближайших платежей не найдено."
 NEAREST_TITLE = "⏭ Ближайший платёж:"
 

@@ -15,15 +15,12 @@ from bot.callbacks import Nav, StatusCB
 from bot.db import repo
 from bot.db.models import Payment, User
 from bot.keyboards import status_menu_kb
-from bot.services.dates import format_date
 from bot.services.humanize import due_phrase, esc
 from bot.services.money import format_money
 from bot.services.recurrence import next_occurrences
 from bot.services.reminders import zone
 
 router = Router(name="status")
-
-_MAX_LINES = 20
 
 
 async def _show_menu(event: Message | CallbackQuery) -> None:
@@ -106,13 +103,22 @@ async def status_period(cb: CallbackQuery, callback_data: StatusCB, session, use
         return
 
     items.sort(key=lambda x: x[0])
-    lines = [title]
-    for d, p in items[:_MAX_LINES]:
-        lines.append(f"• {format_date(d)} {esc(p.title)} — {format_money(p.amount_minor, p.currency)}")
-    if len(items) > _MAX_LINES:
-        lines.append(f"… и ещё {len(items) - _MAX_LINES}")
-    totals_str = " + ".join(format_money(v, c) for c, v in totals.items())
-    lines += ["", texts.STATUS_TOTALS.format(totals=totals_str)]
+    totals_str = ", ".join(format_money(v, c) for c, v in totals.items())
+
+    # уникальные названия платежей в порядке первого появления
+    names: list[str] = []
+    seen: set[str] = set()
+    for _, p in items:
+        if p.title not in seen:
+            seen.add(p.title)
+            names.append(esc(p.title))
+
+    lines = [
+        title,
+        texts.STATUS_TOTALS.format(totals=totals_str),
+        "",
+        texts.STATUS_PAYMENTS.format(names=", ".join(names)),
+    ]
     await _edit(cb, "\n".join(lines))
 
 
