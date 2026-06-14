@@ -26,11 +26,24 @@ CURRENCIES: dict[str, Currency] = {
     "USD": Currency("USD", "$"),
     "EUR": Currency("EUR", "€"),
     "RUB": Currency("RUB", "₽"),
+    "GBP": Currency("GBP", "£"),
+    "CHF": Currency("CHF", "CHF"),
     "MXN": Currency("MXN", "Mex$"),
     "KZT": Currency("KZT", "₸"),
     "GEL": Currency("GEL", "₾"),
     "AMD": Currency("AMD", "֏"),
     "PLN": Currency("PLN", "zł"),
+    "CZK": Currency("CZK", "Kč"),
+    "NOK": Currency("NOK", "kr"),
+    "SEK": Currency("SEK", "kr"),
+    "THB": Currency("THB", "฿"),
+    "KRW": Currency("KRW", "₩", 0),  # у воны нет дробной части
+    "IDR": Currency("IDR", "Rp", 0),  # рупия без дробной части
+    "AUD": Currency("AUD", "A$"),
+    "CAD": Currency("CAD", "C$"),
+    "BRL": Currency("BRL", "R$"),
+    "ARS": Currency("ARS", "AR$"),
+    "COP": Currency("COP", "COL$"),
 }
 
 CURRENCY_ORDER: list[str] = list(CURRENCIES.keys())
