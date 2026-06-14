@@ -1,6 +1,8 @@
 """Настройки: часовой пояс и время напоминаний."""
 from __future__ import annotations
 
+import datetime as dt
+
 from aiogram import F, Router
 from aiogram.exceptions import TelegramBadRequest
 from aiogram.filters import Command
@@ -86,10 +88,9 @@ async def set_tz_text(message: Message, state: FSMContext, session, user: User) 
 
 @router.callback_query(SettingsFSM.notify_time, TimeCB.filter())
 async def set_time_cb(cb: CallbackQuery, callback_data: TimeCB, state: FSMContext, session, user: User) -> None:
-    t = parse_time(callback_data.value)
-    if t is not None:
-        user.notify_time = t
-        await _refresh_reminders(session, user)
+    # value хранится как "HHMM" без двоеточия (двоеточие — разделитель callback_data)
+    user.notify_time = dt.time(int(callback_data.value[:2]), int(callback_data.value[2:]))
+    await _refresh_reminders(session, user)
     await state.clear()
     await cb.message.answer(texts.SETTINGS_SAVED, reply_markup=back_to_menu_kb())
     await cb.answer()

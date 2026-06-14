@@ -1,6 +1,8 @@
 """Онбординг: часовой пояс → время напоминаний → предложить добавить платёж."""
 from __future__ import annotations
 
+import datetime as dt
+
 from aiogram import Router
 from aiogram.fsm.context import FSMContext
 from aiogram.types import CallbackQuery, Message
@@ -52,9 +54,8 @@ async def ob_tz_text(message: Message, state: FSMContext, user: User) -> None:
 
 @router.callback_query(Onboarding.notify_time, TimeCB.filter())
 async def ob_time_cb(cb: CallbackQuery, callback_data: TimeCB, state: FSMContext, user: User) -> None:
-    t = parse_time(callback_data.value)
-    if t is not None:
-        user.notify_time = t
+    # value хранится как "HHMM" без двоеточия (двоеточие — разделитель callback_data)
+    user.notify_time = dt.time(int(callback_data.value[:2]), int(callback_data.value[2:]))
     await _finish(cb, state, user)
 
 

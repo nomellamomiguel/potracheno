@@ -13,7 +13,7 @@ class CityCB(CallbackData, prefix="city"):
 
 
 class TimeCB(CallbackData, prefix="time"):
-    value: str  # "10:00"
+    value: str  # "HHMM" без двоеточия (":" — служебный разделитель callback_data в aiogram)
 
 
 class CurrencyCB(CallbackData, prefix="cur"):

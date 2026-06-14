@@ -67,7 +67,7 @@ def tz_kb() -> InlineKeyboardMarkup:
 def notify_time_kb() -> InlineKeyboardMarkup:
     b = InlineKeyboardBuilder()
     for t in NOTIFY_TIME_PRESETS:
-        b.button(text=t, callback_data=TimeCB(value=t))
+        b.button(text=t, callback_data=TimeCB(value=t.replace(":", "")))
     b.adjust(3)
     return b.as_markup()
 
