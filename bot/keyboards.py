@@ -12,6 +12,7 @@ from bot.callbacks import (
     EditFieldCB,
     FeedbackKindCB,
     FreqCB,
+    MethodCB,
     Nav,
     PaymentCB,
     ReminderToggleCB,
@@ -258,6 +259,7 @@ def settings_kb() -> InlineKeyboardMarkup:
     b = InlineKeyboardBuilder()
     b.button(text="🕒 Часовой пояс", callback_data=SettingsCB(field="tz"))
     b.button(text="⏰ Время напоминаний", callback_data=SettingsCB(field="time"))
+    b.button(text="💳 Способы оплаты", callback_data=SettingsCB(field="methods"))
     b.button(text="🗑 Сбросить всё и начать заново", callback_data=SettingsCB(field="reset"))
     b.button(text="⬅️ Меню", callback_data=Nav(action="menu"))
     b.adjust(1)
@@ -282,5 +284,32 @@ def after_save_kb() -> InlineKeyboardMarkup:
     b = InlineKeyboardBuilder()
     b.button(text="➕ Добавить ещё", callback_data=Nav(action="add"))
     b.button(text="⬅️ Меню", callback_data=Nav(action="menu"))
+    b.adjust(2)
+    return b.as_markup()
+
+
+def payment_methods_kb(methods) -> InlineKeyboardMarkup:
+    b = InlineKeyboardBuilder()
+    for m in methods:
+        b.button(text=m.name[:60], callback_data=MethodCB(action="open", id=m.id))
+    b.button(text="➕ Добавить способ", callback_data=MethodCB(action="add", id=0))
+    b.button(text="⬅️ Назад", callback_data=Nav(action="settings"))
+    b.adjust(1)
+    return b.as_markup()
+
+
+def payment_method_card_kb(method_id: int) -> InlineKeyboardMarkup:
+    b = InlineKeyboardBuilder()
+    b.button(text="✏️ Переименовать", callback_data=MethodCB(action="rename", id=method_id))
+    b.button(text="🗑 Удалить", callback_data=MethodCB(action="delete", id=method_id))
+    b.button(text="⬅️ К списку", callback_data=MethodCB(action="list", id=0))
+    b.adjust(2, 1)
+    return b.as_markup()
+
+
+def method_delete_confirm_kb(method_id: int) -> InlineKeyboardMarkup:
+    b = InlineKeyboardBuilder()
+    b.button(text="🗑 Да, удалить", callback_data=MethodCB(action="confirm_delete", id=method_id))
+    b.button(text="Отмена", callback_data=MethodCB(action="open", id=method_id))
     b.adjust(2)
     return b.as_markup()

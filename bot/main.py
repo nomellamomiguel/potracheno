@@ -19,6 +19,7 @@ from bot.handlers import (
     feedback,
     list_payments,
     onboarding,
+    payment_methods,
     reminders_cb,
     settings as settings_handler,
     status,
@@ -56,6 +57,7 @@ def build_dispatcher() -> Dispatcher:
     dp.include_router(reminders_cb.router)
     dp.include_router(feedback.router)
     dp.include_router(settings_handler.router)
+    dp.include_router(payment_methods.router)
     dp.include_router(commands.fallback_router)
     return dp
 

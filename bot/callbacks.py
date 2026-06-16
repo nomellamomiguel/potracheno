@@ -69,4 +69,9 @@ class FeedbackKindCB(CallbackData, prefix="fbk"):
 
 
 class SettingsCB(CallbackData, prefix="set"):
-    field: str  # tz | time | menu
+    field: str  # tz | time | methods | reset | reset_confirm | menu
+
+
+class MethodCB(CallbackData, prefix="pm"):
+    action: str  # open | add | rename | delete | confirm_delete | list
+    id: int      # 0 — когда id не нужен

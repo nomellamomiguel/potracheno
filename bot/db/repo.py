@@ -3,7 +3,7 @@ from __future__ import annotations
 
 import datetime as dt
 
-from sqlalchemy import delete as sa_delete, select
+from sqlalchemy import delete as sa_delete, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
@@ -11,6 +11,7 @@ from bot.db.models import (
     Feedback,
     FeedbackKind,
     Payment,
+    PaymentMethod,
     PaymentStatus,
     ReminderLog,
     User,
@@ -161,3 +162,54 @@ async def add_feedback(
     session.add(fb)
     await session.flush()
     return fb
+
+
+# --- Способы оплаты ---
+MAX_PAYMENT_METHODS = 10
+
+
+async def list_payment_methods(session: AsyncSession, user_id: int) -> list[PaymentMethod]:
+    res = await session.execute(
+        select(PaymentMethod)
+        .where(PaymentMethod.user_id == user_id)
+        .order_by(PaymentMethod.created_at, PaymentMethod.id)
+    )
+    return list(res.scalars().all())
+
+
+async def count_payment_methods(session: AsyncSession, user_id: int) -> int:
+    res = await session.execute(
+        select(func.count())
+        .select_from(PaymentMethod)
+        .where(PaymentMethod.user_id == user_id)
+    )
+    return res.scalar_one()
+
+
+async def add_payment_method(
+    session: AsyncSession, user_id: int, name: str
+) -> PaymentMethod | None:
+    if await count_payment_methods(session, user_id) >= MAX_PAYMENT_METHODS:
+        return None
+    method = PaymentMethod(user_id=user_id, name=(name or "").strip()[:64])
+    session.add(method)
+    await session.flush()
+    return method
+
+
+async def get_user_payment_method(
+    session: AsyncSession, method_id: int, user_id: int
+) -> PaymentMethod | None:
+    m = await session.get(PaymentMethod, method_id)
+    return m if (m and m.user_id == user_id) else None
+
+
+async def rename_payment_method(
+    session: AsyncSession, method: PaymentMethod, new_name: str
+) -> None:
+    method.name = (new_name or "").strip()[:64]
+    await session.flush()
+
+
+async def delete_payment_method(session: AsyncSession, method: PaymentMethod) -> None:
+    await session.delete(method)

@@ -38,3 +38,8 @@ class FeedbackFSM(StatesGroup):
 class SettingsFSM(StatesGroup):
     tz = State()
     notify_time = State()
+
+
+class PaymentMethodFSM(StatesGroup):
+    add = State()
+    rename = State()

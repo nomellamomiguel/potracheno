@@ -64,6 +64,9 @@ class User(Base):
     payments: Mapped[list["Payment"]] = relationship(
         back_populates="user", cascade="all, delete-orphan"
     )
+    payment_methods: Mapped[list["PaymentMethod"]] = relationship(
+        back_populates="user", cascade="all, delete-orphan"
+    )
 
 
 class Payment(Base):
@@ -136,3 +139,16 @@ class Feedback(Base):
     kind: Mapped[FeedbackKind] = mapped_column(SAEnum(FeedbackKind))
     text: Mapped[str] = mapped_column(String(4000))
     created_at: Mapped[dt.datetime] = mapped_column(DateTime, server_default=func.now())
+
+
+class PaymentMethod(Base):
+    __tablename__ = "payment_methods"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    user_id: Mapped[int] = mapped_column(
+        BigInteger, ForeignKey("users.id", ondelete="CASCADE"), index=True
+    )
+    name: Mapped[str] = mapped_column(String(64))
+    created_at: Mapped[dt.datetime] = mapped_column(DateTime, server_default=func.now())
+
+    user: Mapped["User"] = relationship(back_populates="payment_methods")
