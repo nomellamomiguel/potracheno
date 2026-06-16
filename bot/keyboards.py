@@ -24,6 +24,7 @@ from bot.callbacks import (
     ToggleCB,
     WizardCB,
 )
+from bot.db.repo import MAX_PAYMENT_METHODS
 from bot.services.dates import RU_MONTHS, RU_WEEKDAYS
 from bot.services.money import COMMON_CURRENCIES
 from bot.services.timezones import CITY_TZ, TZ_BUTTONS
@@ -323,7 +324,7 @@ def add_method_kb(methods) -> InlineKeyboardMarkup:
     b.button(text="💳 Карта/трансфер", callback_data=AddMethodCB(value="card"))
     for m in methods:
         b.button(text=m.name[:60], callback_data=AddMethodCB(value=str(m.id)))
-    if not methods:
+    if len(methods) < MAX_PAYMENT_METHODS:
         b.button(text="➕ Добавить способ оплаты", callback_data=AddMethodCB(value="add"))
     b.button(text="⏭ Пропустить", callback_data=AddMethodCB(value="skip"))
     b.button(text="⬅️ Назад", callback_data=AddMethodCB(value="back"))

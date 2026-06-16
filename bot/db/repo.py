@@ -97,7 +97,7 @@ async def delete_reminders_for_payment(session: AsyncSession, payment_id: int) -
 
 
 async def reset_user_data(session: AsyncSession, user: User) -> int:
-    """Полный сброс: удаляет все платежи пользователя (с напоминаниями) и его настройки.
+    """Полный сброс: удаляет все платежи (с напоминаниями), способы оплаты и настройки.
 
     Возвращает число удалённых платежей. Затрагивает только данные этого user.id.
     """
@@ -109,6 +109,10 @@ async def reset_user_data(session: AsyncSession, user: User) -> int:
     for payment in payments:
         await delete_reminders_for_payment(session, payment.id)  # сначала напоминания
         await delete_payment(session, payment)                   # затем сам платёж
+    # удаляем все способы оплаты пользователя
+    await session.execute(
+        sa_delete(PaymentMethod).where(PaymentMethod.user_id == user.id)
+    )
     user.onboarded = False
     user.tz = "Europe/Moscow"
     user.notify_time = dt.time(10, 0)

@@ -1,10 +1,15 @@
+import datetime as dt
+from types import SimpleNamespace
+
 import pytest_asyncio
 from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
 
+from bot.callbacks import AddMethodCB
 from bot.db import repo
 from bot.db.base import Base
-from bot.db.models import User
+from bot.db.models import Freq, Payment, PaymentStatus, User
 from bot.db.repo import MAX_PAYMENT_METHODS
+from bot.keyboards import add_method_kb
 
 
 @pytest_asyncio.fixture
@@ -71,3 +76,31 @@ async def test_user_isolation(session):
     assert await repo.get_user_payment_method(session, m1.id, 2) is None
     assert await repo.get_user_payment_method(session, m1.id, 1) is m1
     assert await repo.list_payment_methods(session, 2) == []
+
+
+async def test_reset_clears_payment_methods(session):
+    u = await _user(session)
+    await repo.add_payment_method(session, 1, "Сбер")
+    await repo.add_payment_method(session, 1, "Тинькофф")
+    p = Payment(
+        user_id=1, title="X", currency="USD", amount_minor=100, freq=Freq.month,
+        by_monthdays=[1], anchor_date=dt.date.today(), reminder_offsets=[],
+        status=PaymentStatus.active,
+    )
+    session.add(p)
+    await session.flush()
+    await repo.reset_user_data(session, u)
+    assert await repo.count_payment_methods(session, 1) == 0
+    assert await repo.list_payment_methods(session, 1) == []
+
+
+def _method_values(methods) -> list[str]:
+    kb = add_method_kb(methods)
+    return [AddMethodCB.unpack(b.callback_data).value for row in kb.inline_keyboard for b in row]
+
+
+def test_add_method_button_respects_limit():
+    below = [SimpleNamespace(id=i, name=f"m{i}") for i in range(3)]
+    assert "add" in _method_values(below)  # < лимита — кнопка есть
+    full = [SimpleNamespace(id=i, name=f"m{i}") for i in range(MAX_PAYMENT_METHODS)]
+    assert "add" not in _method_values(full)  # == лимит — кнопки нет

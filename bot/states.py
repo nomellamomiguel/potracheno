@@ -24,6 +24,7 @@ class AddPayment(StatesGroup):
     once_date = State()
     reminders = State()
     payment_method = State()
+    method_new = State()
     confirm = State()
 
 

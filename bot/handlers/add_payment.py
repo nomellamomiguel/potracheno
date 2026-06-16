@@ -35,7 +35,6 @@ from bot.keyboards import (
     freq_kb,
     months_kb,
     payment_card_kb,
-    payment_methods_kb,
     reminders_kb,
     weekdays_kb,
 )
@@ -336,12 +335,9 @@ async def step_method(
             )
         await cb.answer()
         return
-    if v == "add":  # прервать мастер и открыть раздел способов оплаты
-        await state.clear()
-        await cb.message.answer(texts.ADD_METHOD_ABORTED)
-        methods = await repo.list_payment_methods(session, user.id)
-        title = texts.METHODS_TITLE if methods else texts.METHODS_EMPTY
-        await cb.message.answer(title, reply_markup=payment_methods_kb(methods))
+    if v == "add":  # добавить способ, не выходя из мастера
+        await state.set_state(AddPayment.method_new)
+        await cb.message.answer(texts.METHOD_ADD_PROMPT)
         await cb.answer()
         return
     if v == "skip":  # способ не указываем (останется None)
@@ -363,6 +359,24 @@ async def step_method(
         return
     await state.update_data(payment_method=name)
     await _show_confirm(cb, state)
+
+
+@router.message(AddPayment.method_new)
+async def step_method_new(message: Message, state: FSMContext, session, user: User) -> None:
+    name = (message.text or "").strip()
+    if not name:
+        await message.answer(texts.METHOD_NAME_EMPTY)
+        return
+    method = await repo.add_payment_method(session, user.id, name)
+    if method is None:  # лимит достигнут — вернуться к выбору способа
+        methods = await repo.list_payment_methods(session, user.id)
+        await state.set_state(AddPayment.payment_method)
+        await message.answer(texts.METHOD_LIMIT.format(limit=repo.MAX_PAYMENT_METHODS))
+        await message.answer(texts.ADD_METHOD, reply_markup=add_method_kb(methods))
+        return
+    # создан — сразу выбираем его для текущего платежа и идём к подтверждению
+    await state.update_data(payment_method=method.name)
+    await _show_confirm(message, state)
 
 
 def _preview(data: dict):
