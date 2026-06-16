@@ -133,9 +133,9 @@ def _group_thousands(digits: str) -> str:
 
 
 def format_money(amount_minor: int, currency: str) -> str:
-    """Форматирует минорные единицы в строку с фикс. числом знаков и символом валюты.
+    """Форматирует минорные единицы в строку с фикс. числом знаков и кодом валюты.
 
-    Единый формат: '120,00 $', '9 000,00 ₽', '1 234,50 €' (пробелы — неразрывные).
+    Единый формат: '120,00 USD', '9 000,00 RUB', '1 234,50 EUR' (пробелы — неразрывные).
     """
     cur = get_currency(currency)
     sign = "-" if amount_minor < 0 else ""
@@ -147,4 +147,4 @@ def format_money(amount_minor: int, currency: str) -> str:
         int_part = _group_thousands(str(a // divisor))
         frac_part = str(a % divisor).rjust(cur.exponent, "0")
         body = f"{int_part},{frac_part}"
-    return f"{sign}{body}{_NBSP}{cur.symbol}"
+    return f"{sign}{body}{_NBSP}{cur.code}"
