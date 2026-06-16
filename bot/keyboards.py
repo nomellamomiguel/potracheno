@@ -23,7 +23,7 @@ from bot.callbacks import (
     WizardCB,
 )
 from bot.services.dates import RU_MONTHS, RU_WEEKDAYS
-from bot.services.money import COMMON_CURRENCIES, CURRENCY_ORDER
+from bot.services.money import COMMON_CURRENCIES
 from bot.services.timezones import CITY_TZ, TZ_BUTTONS
 from bot.texts import CATEGORIES
 
@@ -92,12 +92,18 @@ def currency_kb() -> InlineKeyboardMarkup:
     return b.as_markup()
 
 
+# Строгий порядок валют на экране «Больше валют» (все валюты, кроме COMMON_CURRENCIES).
+MORE_CURRENCIES_ORDER: list[str] = [
+    "GEL", "RSD", "AED", "KZT", "AMD", "ILS", "GBP", "THB", "ARS", "PLN",
+    "TRY", "UAH", "BYN", "VND", "CHF", "CZK", "BRL", "NOK", "SEK", "DKK",
+    "AUD", "CAD", "COP", "CNY", "INR", "MYR", "KRW", "IDR",
+]
+
+
 def currency_more_kb() -> InlineKeyboardMarkup:
-    """Полный список остальных валют (кодами) + «Назад» к частым."""
+    """Полный список остальных валют (кодами, строгий порядок) + «Назад» к частым."""
     b = InlineKeyboardBuilder()
-    for code in CURRENCY_ORDER:
-        if code in COMMON_CURRENCIES:
-            continue
+    for code in MORE_CURRENCIES_ORDER:
         b.button(text=code, callback_data=CurrencyCB(code=code))
     b.button(text="⬅️ Назад", callback_data=CurrencyCB(code="back"))
     b.adjust(4)

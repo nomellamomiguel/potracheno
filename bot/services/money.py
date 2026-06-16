@@ -46,6 +46,15 @@ CURRENCIES: dict[str, Currency] = {
     "COP": Currency("COP", "COL$"),
     "CNY": Currency("CNY", "¥"),
     "INR": Currency("INR", "₹"),
+    "RSD": Currency("RSD", "дин."),
+    "AED": Currency("AED", "د.إ"),
+    "ILS": Currency("ILS", "₪"),
+    "TRY": Currency("TRY", "₺"),
+    "UAH": Currency("UAH", "₴"),
+    "BYN": Currency("BYN", "Br"),
+    "VND": Currency("VND", "₫", 0),  # донг без дробной части
+    "DKK": Currency("DKK", "kr"),
+    "MYR": Currency("MYR", "RM"),
 }
 
 CURRENCY_ORDER: list[str] = list(CURRENCIES.keys())
