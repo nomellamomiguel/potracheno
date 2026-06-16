@@ -23,7 +23,7 @@ from bot.callbacks import (
     WizardCB,
 )
 from bot.services.dates import RU_MONTHS, RU_WEEKDAYS
-from bot.services.money import CURRENCY_ORDER, get_currency
+from bot.services.money import COMMON_CURRENCIES, CURRENCY_ORDER
 from bot.services.timezones import CITY_TZ, TZ_BUTTONS
 from bot.texts import CATEGORIES
 
@@ -82,12 +82,25 @@ def category_kb() -> InlineKeyboardMarkup:
 
 
 def currency_kb() -> InlineKeyboardMarkup:
+    """Первый экран: частые валюты (кодами) + «Больше валют» + «Другая (ISO)»."""
+    b = InlineKeyboardBuilder()
+    for code in COMMON_CURRENCIES:
+        b.button(text=code, callback_data=CurrencyCB(code=code))
+    b.button(text="🌍 Больше валют", callback_data=CurrencyCB(code="more"))
+    b.button(text="Другая (ISO)", callback_data=CurrencyCB(code="custom"))
+    b.adjust(4, 2)
+    return b.as_markup()
+
+
+def currency_more_kb() -> InlineKeyboardMarkup:
+    """Полный список остальных валют (кодами) + «Назад» к частым."""
     b = InlineKeyboardBuilder()
     for code in CURRENCY_ORDER:
-        cur = get_currency(code)
-        b.button(text=f"{code} {cur.symbol}", callback_data=CurrencyCB(code=code))
-    b.button(text="Другая (ISO)", callback_data=CurrencyCB(code="custom"))
-    b.adjust(3)
+        if code in COMMON_CURRENCIES:
+            continue
+        b.button(text=code, callback_data=CurrencyCB(code=code))
+    b.button(text="⬅️ Назад", callback_data=CurrencyCB(code="back"))
+    b.adjust(4)
     return b.as_markup()
 
 
@@ -252,4 +265,12 @@ def reset_confirm_kb() -> InlineKeyboardMarkup:
 def back_to_menu_kb() -> InlineKeyboardMarkup:
     b = InlineKeyboardBuilder()
     b.button(text="⬅️ Меню", callback_data=Nav(action="menu"))
+    return b.as_markup()
+
+
+def after_save_kb() -> InlineKeyboardMarkup:
+    b = InlineKeyboardBuilder()
+    b.button(text="➕ Добавить ещё", callback_data=Nav(action="add"))
+    b.button(text="⬅️ Меню", callback_data=Nav(action="menu"))
+    b.adjust(2)
     return b.as_markup()

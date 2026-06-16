@@ -25,10 +25,11 @@ from bot.db import repo
 from bot.db.models import Freq, Payment, PaymentStatus, User
 from bot.handlers.commands import show_main_menu
 from bot.keyboards import (
-    back_to_menu_kb,
+    after_save_kb,
     category_kb,
     confirm_kb,
     currency_kb,
+    currency_more_kb,
     freq_kb,
     months_kb,
     payment_card_kb,
@@ -111,11 +112,18 @@ async def _ask_currency(event: Message | CallbackQuery, state: FSMContext) -> No
 
 @router.callback_query(AddPayment.currency, CurrencyCB.filter())
 async def step_currency(cb: CallbackQuery, callback_data: CurrencyCB, state: FSMContext) -> None:
-    if callback_data.code == "custom":
+    code = callback_data.code
+    if code == "more":
+        await _edit_markup(cb, currency_more_kb())
+        return
+    if code == "back":
+        await _edit_markup(cb, currency_kb())
+        return
+    if code == "custom":
         await state.set_state(AddPayment.currency_custom)
         await _send(cb, texts.ADD_CURRENCY_CUSTOM)
         return
-    await state.update_data(currency=callback_data.code)
+    await state.update_data(currency=code)
     await _ask_amount(cb, state)
 
 
@@ -405,5 +413,5 @@ async def confirm_save(cb: CallbackQuery, state: FSMContext, session, user: User
         pass
     if due is None:
         await cb.message.answer(texts.NO_NEXT_DATE)
-    await cb.message.answer(texts.SAVED, reply_markup=back_to_menu_kb())
+    await cb.message.answer(texts.SAVED, reply_markup=after_save_kb())
     await cb.answer()

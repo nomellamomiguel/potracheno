@@ -17,7 +17,7 @@ class TimeCB(CallbackData, prefix="time"):
 
 
 class CurrencyCB(CallbackData, prefix="cur"):
-    code: str  # ISO-код или "custom"
+    code: str  # ISO-код, либо служебное: "more" | "back" | "custom"
 
 
 class CategoryCB(CallbackData, prefix="cat"):

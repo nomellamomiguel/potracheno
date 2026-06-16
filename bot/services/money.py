@@ -44,9 +44,14 @@ CURRENCIES: dict[str, Currency] = {
     "BRL": Currency("BRL", "R$"),
     "ARS": Currency("ARS", "AR$"),
     "COP": Currency("COP", "COL$"),
+    "CNY": Currency("CNY", "¥"),
+    "INR": Currency("INR", "₹"),
 }
 
 CURRENCY_ORDER: list[str] = list(CURRENCIES.keys())
+
+# Частые валюты — первый экран выбора; остальные показываются под «🌍 Больше валют».
+COMMON_CURRENCIES: list[str] = ["RUB", "USD", "EUR", "MXN"]
 
 
 def get_currency(code: str) -> Currency:
