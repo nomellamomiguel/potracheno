@@ -26,12 +26,16 @@ router = Router(name="list_payments")
 VISIBLE = (PaymentStatus.active, PaymentStatus.paused)
 
 
-async def _render_list(event: Message | CallbackQuery, session, user: User) -> None:
-    payments = await repo.list_payments(session, user.id, statuses=VISIBLE)
-    if not payments:
-        await _reply(event, texts.NO_PAYMENTS, back_to_menu_kb())
-        return
-    await _reply(event, texts.LIST_TITLE, payment_list_kb(payments))
+async def _render_list(
+    event: Message | CallbackQuery, session, user: User, archived: bool = False
+) -> None:
+    statuses = (PaymentStatus.archived,) if archived else VISIBLE
+    payments = await repo.list_payments(session, user.id, statuses=statuses)
+    if archived:
+        text = texts.ARCHIVE_TITLE if payments else texts.NO_ARCHIVED
+    else:
+        text = texts.LIST_TITLE if payments else texts.NO_PAYMENTS
+    await _reply(event, text, payment_list_kb(payments, archived=archived))
 
 
 async def _reply(event: Message | CallbackQuery, text: str, kb) -> None:
@@ -63,6 +67,12 @@ async def cmd_list(message: Message, state: FSMContext, session, user: User) -> 
 async def nav_list(cb: CallbackQuery, state: FSMContext, session, user: User) -> None:
     await state.clear()
     await _render_list(cb, session, user)
+
+
+@router.callback_query(Nav.filter(F.action == "list_archived"))
+async def nav_list_archived(cb: CallbackQuery, state: FSMContext, session, user: User) -> None:
+    await state.clear()
+    await _render_list(cb, session, user, archived=True)
 
 
 @router.callback_query(PaymentCB.filter(F.action == "list"))

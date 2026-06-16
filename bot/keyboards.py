@@ -161,14 +161,18 @@ def confirm_kb() -> InlineKeyboardMarkup:
     return b.as_markup()
 
 
-def payment_list_kb(payments) -> InlineKeyboardMarkup:
+def payment_list_kb(payments, archived: bool = False) -> InlineKeyboardMarkup:
     from bot.services.money import format_money
 
     b = InlineKeyboardBuilder()
     for p in payments:
         label = f"{p.title} — {format_money(p.amount_minor, p.currency)}"
         b.button(text=label[:60], callback_data=PaymentCB(action="open", id=p.id))
-    b.button(text="➕ Добавить", callback_data=Nav(action="add"))
+    if archived:
+        b.button(text="📋 Активные", callback_data=Nav(action="list"))
+    else:
+        b.button(text="🗄 Архив", callback_data=Nav(action="list_archived"))
+        b.button(text="➕ Добавить", callback_data=Nav(action="add"))
     b.button(text="⬅️ Меню", callback_data=Nav(action="menu"))
     b.adjust(1)
     return b.as_markup()
