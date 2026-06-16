@@ -79,6 +79,7 @@ class Payment(Base):
     title: Mapped[str] = mapped_column(String(255))
     category: Mapped[str | None] = mapped_column(String(64), nullable=True)
     currency: Mapped[str] = mapped_column(String(3))
+    payment_method: Mapped[str | None] = mapped_column(String(64), nullable=True)  # NULL = не указан
     amount_minor: Mapped[int] = mapped_column(BigInteger)  # сумма в минорных единицах
 
     # Периодичность

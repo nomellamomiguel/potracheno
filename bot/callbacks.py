@@ -75,3 +75,7 @@ class SettingsCB(CallbackData, prefix="set"):
 class MethodCB(CallbackData, prefix="pm"):
     action: str  # open | add | rename | delete | confirm_delete | list
     id: int      # 0 — когда id не нужен
+
+
+class AddMethodCB(CallbackData, prefix="amt"):
+    value: str  # cash | card | skip | back | add | "<method_id>" (id своего способа)

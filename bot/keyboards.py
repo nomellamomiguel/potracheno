@@ -5,6 +5,7 @@ from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup
 from aiogram.utils.keyboard import InlineKeyboardBuilder
 
 from bot.callbacks import (
+    AddMethodCB,
     CategoryCB,
     CityCB,
     ConfirmCB,
@@ -312,4 +313,19 @@ def method_delete_confirm_kb(method_id: int) -> InlineKeyboardMarkup:
     b.button(text="🗑 Да, удалить", callback_data=MethodCB(action="confirm_delete", id=method_id))
     b.button(text="Отмена", callback_data=MethodCB(action="open", id=method_id))
     b.adjust(2)
+    return b.as_markup()
+
+
+def add_method_kb(methods) -> InlineKeyboardMarkup:
+    """Шаг мастера /add: выбор способа оплаты (встроенные + свои + пропустить/назад)."""
+    b = InlineKeyboardBuilder()
+    b.button(text="💵 Наличные", callback_data=AddMethodCB(value="cash"))
+    b.button(text="💳 Карта/трансфер", callback_data=AddMethodCB(value="card"))
+    for m in methods:
+        b.button(text=m.name[:60], callback_data=AddMethodCB(value=str(m.id)))
+    if not methods:
+        b.button(text="➕ Добавить способ оплаты", callback_data=AddMethodCB(value="add"))
+    b.button(text="⏭ Пропустить", callback_data=AddMethodCB(value="skip"))
+    b.button(text="⬅️ Назад", callback_data=AddMethodCB(value="back"))
+    b.adjust(1)
     return b.as_markup()

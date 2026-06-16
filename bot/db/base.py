@@ -32,9 +32,24 @@ engine = create_async_engine(_settings.db_url, echo=False, future=True)
 SessionMaker = async_sessionmaker(engine, expire_on_commit=False, class_=AsyncSession)
 
 
+def _migrate(sync_conn) -> None:
+    """Идемпотентные точечные миграции для SQLite (create_all не меняет существующие таблицы)."""
+    if sync_conn.dialect.name != "sqlite":
+        return
+    cols = [
+        row[1]
+        for row in sync_conn.exec_driver_sql("PRAGMA table_info(payments)").fetchall()
+    ]
+    if "payment_method" not in cols:
+        sync_conn.exec_driver_sql(
+            "ALTER TABLE payments ADD COLUMN payment_method VARCHAR(64)"
+        )
+
+
 async def init_db() -> None:
-    """Создаёт таблицы по моделям (для MVP вместо миграций)."""
+    """Создаёт таблицы по моделям + точечные идемпотентные миграции."""
     from bot.db import models  # noqa: F401  — регистрирует мапперы
 
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
+        await conn.run_sync(_migrate)

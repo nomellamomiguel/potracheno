@@ -114,10 +114,13 @@ def payment_card(payment) -> str:
     status_val = payment.status.value if hasattr(payment.status, "value") else str(payment.status)
     marks = {"paused": " ⏸ на паузе", "archived": " 🗄 в архиве"}
     mark = marks.get(status_val, "")
+    method = getattr(payment, "payment_method", None)
+    method_line = f"\nСпособ оплаты: {esc(method)}" if method else ""
     return (
         f"💳 <b>{title}</b>{cat}{mark}\n"
         f"Сумма: <b>{amount}</b>\n"
         f"Периодичность: {rec}\n"
         f"Ближайший платёж: {due_phrase(payment.next_due_date)}\n"
         f"Напоминания: {rem}"
+        f"{method_line}"
     )

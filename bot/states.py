@@ -23,6 +23,7 @@ class AddPayment(StatesGroup):
     year_day = State()
     once_date = State()
     reminders = State()
+    payment_method = State()
     confirm = State()
 
 

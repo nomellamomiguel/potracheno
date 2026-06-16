@@ -12,6 +12,7 @@ from aiogram.types import CallbackQuery, Message
 
 from bot import texts
 from bot.callbacks import (
+    AddMethodCB,
     CategoryCB,
     ConfirmCB,
     CurrencyCB,
@@ -25,6 +26,7 @@ from bot.db import repo
 from bot.db.models import Freq, Payment, PaymentStatus, User
 from bot.handlers.commands import show_main_menu
 from bot.keyboards import (
+    add_method_kb,
     after_save_kb,
     category_kb,
     confirm_kb,
@@ -33,6 +35,7 @@ from bot.keyboards import (
     freq_kb,
     months_kb,
     payment_card_kb,
+    payment_methods_kb,
     reminders_kb,
     weekdays_kb,
 )
@@ -298,12 +301,67 @@ async def step_rem_custom_value(message: Message, state: FSMContext) -> None:
 
 
 @router.callback_query(AddPayment.reminders, WizardCB.filter(F.action == "done_reminders"))
-async def step_rem_done(cb: CallbackQuery, state: FSMContext) -> None:
+async def step_rem_done(cb: CallbackQuery, state: FSMContext, session, user: User) -> None:
     data = await state.get_data()
     rem = sorted(set(data.get("reminders", [])), reverse=True)
     if not rem:
         rem = [1]  # дефолт по договорённости — «за 1 день»
     await state.update_data(reminder_offsets=[{"days": d} for d in rem])
+    await _ask_method(cb, state, session, user)
+
+
+async def _ask_method(
+    event: Message | CallbackQuery, state: FSMContext, session, user: User
+) -> None:
+    methods = await repo.list_payment_methods(session, user.id)
+    await state.set_state(AddPayment.payment_method)
+    await _send(event, texts.ADD_METHOD, add_method_kb(methods))
+
+
+@router.callback_query(AddPayment.payment_method, AddMethodCB.filter())
+async def step_method(
+    cb: CallbackQuery, callback_data: AddMethodCB, state: FSMContext, session, user: User
+) -> None:
+    v = callback_data.value
+    if v == "back":  # вернуться к шагу напоминаний (выбор сохраняется)
+        data = await state.get_data()
+        await state.set_state(AddPayment.reminders)
+        try:
+            await cb.message.edit_text(
+                texts.ADD_REMINDERS, reply_markup=reminders_kb(data.get("reminders", []))
+            )
+        except TelegramBadRequest:
+            await cb.message.answer(
+                texts.ADD_REMINDERS, reply_markup=reminders_kb(data.get("reminders", []))
+            )
+        await cb.answer()
+        return
+    if v == "add":  # прервать мастер и открыть раздел способов оплаты
+        await state.clear()
+        await cb.message.answer(texts.ADD_METHOD_ABORTED)
+        methods = await repo.list_payment_methods(session, user.id)
+        title = texts.METHODS_TITLE if methods else texts.METHODS_EMPTY
+        await cb.message.answer(title, reply_markup=payment_methods_kb(methods))
+        await cb.answer()
+        return
+    if v == "skip":  # способ не указываем (останется None)
+        await state.update_data(payment_method=None)
+        await _show_confirm(cb, state)
+        return
+    if v == "cash":
+        name = "Наличные"
+    elif v == "card":
+        name = "Карта/трансфер"
+    elif v.isdigit():
+        method = await repo.get_user_payment_method(session, int(v), user.id)
+        if not method:
+            await cb.answer(texts.METHOD_GONE, show_alert=True)
+            return
+        name = method.name
+    else:
+        await cb.answer()
+        return
+    await state.update_data(payment_method=name)
     await _show_confirm(cb, state)
 
 
@@ -321,6 +379,7 @@ def _preview(data: dict):
         by_monthdays=data.get("by_monthdays"),
         by_months=data.get("by_months"),
         reminder_offsets=data.get("reminder_offsets", []),
+        payment_method=data.get("payment_method"),
         status="active",
         anchor_date=anchor,
         next_due_date=None,
@@ -371,6 +430,7 @@ async def confirm_save(cb: CallbackQuery, state: FSMContext, session, user: User
         payment.by_months = data.get("by_months")
         payment.anchor_date = anchor
         payment.reminder_offsets = data.get("reminder_offsets", [])
+        payment.payment_method = data.get("payment_method")
         await session.flush()
         await repo.clear_pending_reminders(session, payment.id)
         due = await set_initial_due_and_reminders(session, payment, user)
@@ -401,6 +461,7 @@ async def confirm_save(cb: CallbackQuery, state: FSMContext, session, user: User
         by_months=data.get("by_months"),
         anchor_date=anchor,
         reminder_offsets=data.get("reminder_offsets", []),
+        payment_method=data.get("payment_method"),
         status=PaymentStatus.active,
     )
     session.add(payment)

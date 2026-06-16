@@ -69,6 +69,25 @@ def _occurrences_in(payment: Payment, start: dt.date, end: dt.date) -> list[dt.d
     return [d for d in occ if d <= end]
 
 
+def methods_breakdown(
+    items: list[tuple[dt.date, Payment]],
+) -> tuple[dict[str, dict[str, int]], bool]:
+    """Группирует платежи периода по способу оплаты (валюта -> сумма).
+
+    Возвращает (разбивка, has_any). has_any = есть ли хоть один платёж с указанным способом.
+    Платежи без способа попадают в группу texts.METHOD_NONE_GROUP.
+    """
+    by_method: dict[str, dict[str, int]] = {}
+    has_any = False
+    for _, p in items:
+        if p.payment_method:
+            has_any = True
+        key = p.payment_method or texts.METHOD_NONE_GROUP
+        cur_totals = by_method.setdefault(key, {})
+        cur_totals[p.currency] = cur_totals.get(p.currency, 0) + p.amount_minor
+    return by_method, has_any
+
+
 @router.callback_query(StatusCB.filter(F.period == "nearest"))
 async def status_nearest(cb: CallbackQuery, session, user: User) -> None:
     payments = [p for p in await repo.list_payments(session, user.id) if p.next_due_date]
@@ -119,6 +138,16 @@ async def status_period(cb: CallbackQuery, callback_data: StatusCB, session, use
         "",
         texts.STATUS_PAYMENTS.format(names=", ".join(names)),
     ]
+
+    # разрез по способам оплаты — только если хоть у одного платежа способ указан
+    by_method, has_any = methods_breakdown(items)
+    if has_any:
+        lines.append("")
+        lines.append(texts.STATUS_BY_METHOD)
+        for method_name, cur_totals in by_method.items():
+            mt = ", ".join(format_money(v, c) for c, v in cur_totals.items())
+            lines.append(f"{esc(method_name)}: {mt}")
+
     await _edit(cb, "\n".join(lines))
 
 
