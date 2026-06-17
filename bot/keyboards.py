@@ -11,6 +11,7 @@ from bot.callbacks import (
     ConfirmCB,
     CurrencyCB,
     EditFieldCB,
+    FaqCB,
     FeedbackKindCB,
     FreqCB,
     MethodCB,
@@ -47,7 +48,8 @@ def main_menu_kb() -> InlineKeyboardMarkup:
     b.button(text="⚙️ Настройки", callback_data=Nav(action="settings"))
     b.button(text="✉️ Обратная связь", callback_data=Nav(action="feedback"))
     b.button(text="❓ Помощь", callback_data=Nav(action="help"))
-    b.adjust(1, 2, 2, 1)
+    b.button(text="💡 Помощь и советы", callback_data=FaqCB(section="intro"))
+    b.adjust(1, 2, 2, 2)
     return b.as_markup()
 
 
@@ -356,4 +358,42 @@ def wizard_nav_kb(back: bool, *, cancel: bool = True) -> InlineKeyboardMarkup:
     if cancel:
         nav.append(InlineKeyboardButton(text="✖️ Отменить", callback_data=WizardNavCB(action="cancel").pack()))
     b.row(*nav)
+    return b.as_markup()
+
+
+def title_nav_kb() -> InlineKeyboardMarkup:
+    """Навигация первого шага мастера /add: помощь + отмена (без «Назад»)."""
+    b = InlineKeyboardBuilder()
+    b.button(text="💡 Помощь и советы", callback_data=FaqCB(section="intro"))
+    b.button(text="✖️ Отменить", callback_data=WizardNavCB(action="cancel"))
+    b.adjust(1)
+    return b.as_markup()
+
+
+def faq_menu_kb() -> InlineKeyboardMarkup:
+    b = InlineKeyboardBuilder()
+    b.button(text="📂 Какие бывают", callback_data=FaqCB(section="types"))
+    b.button(text="🔍 Как найти", callback_data=FaqCB(section="find"))
+    b.button(text="🕵️ Тёмные паттерны", callback_data=FaqCB(section="dark"))
+    b.button(text="🗓 Дата и периодичность", callback_data=FaqCB(section="date"))
+    b.button(text="✂️ Как отменить", callback_data=FaqCB(section="cancel"))
+    b.button(text="💱 Разные валюты", callback_data=FaqCB(section="currency"))
+    b.button(text="⬅️ Меню", callback_data=Nav(action="menu"))
+    b.adjust(1)
+    return b.as_markup()
+
+
+def faq_section_kb() -> InlineKeyboardMarkup:
+    b = InlineKeyboardBuilder()
+    b.button(text="⬅️ К разделам", callback_data=FaqCB(section="intro"))
+    b.button(text="➕ Добавить платёж", callback_data=Nav(action="add"))
+    b.adjust(1)
+    return b.as_markup()
+
+
+def help_kb() -> InlineKeyboardMarkup:
+    b = InlineKeyboardBuilder()
+    b.button(text="💡 Помощь и советы", callback_data=FaqCB(section="intro"))
+    b.button(text="⬅️ Меню", callback_data=Nav(action="menu"))
+    b.adjust(1)
     return b.as_markup()

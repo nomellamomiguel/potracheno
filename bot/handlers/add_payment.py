@@ -44,6 +44,7 @@ from bot.keyboards import (
     months_kb,
     payment_card_kb,
     reminders_kb,
+    title_nav_kb,
     weekdays_kb,
     with_nav,
     wizard_nav_kb,
@@ -123,7 +124,7 @@ def _preview(data: dict):
 # --- функции показа шагов (set state + prompt + клавиатура с навигацией) ---
 async def show_title(event, state, session=None, user=None) -> None:
     await state.set_state(AddPayment.title)
-    await _send(event, texts.ADD_TITLE, wizard_nav_kb(await _nav_back(state)))
+    await _send(event, texts.ADD_TITLE, title_nav_kb())
 
 
 async def show_category(event, state, session=None, user=None) -> None:
@@ -226,7 +227,7 @@ STEP_SHOW = {
 async def _begin(event: Message | CallbackQuery, state: FSMContext) -> None:
     await state.set_state(AddPayment.title)
     await state.set_data({"history": []})
-    await _send(event, texts.ADD_TITLE, wizard_nav_kb(False))
+    await _send(event, texts.ADD_TITLE, title_nav_kb())
 
 
 # --- навигация: Отмена и Назад (в любом состоянии AddPayment) ---
@@ -269,7 +270,7 @@ async def add_from_menu(cb: CallbackQuery, state: FSMContext) -> None:
 async def step_title(message: Message, state: FSMContext, session, user: User) -> None:
     title = (message.text or "").strip()
     if not title:
-        await message.answer(texts.ADD_TITLE, reply_markup=wizard_nav_kb(await _nav_back(state)))
+        await message.answer(texts.ADD_TITLE, reply_markup=title_nav_kb())
         return
     await state.update_data(title=title[:255])
     await _goto(message, state, show_category, session, user)

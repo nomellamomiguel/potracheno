@@ -83,3 +83,7 @@ class AddMethodCB(CallbackData, prefix="amt"):
 
 class WizardNavCB(CallbackData, prefix="wnav"):
     action: str  # back | cancel  — навигация в мастере /add
+
+
+class FaqCB(CallbackData, prefix="faq"):
+    section: str  # intro | types | find | dark | date | cancel | currency

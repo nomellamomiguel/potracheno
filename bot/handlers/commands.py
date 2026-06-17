@@ -12,8 +12,8 @@ from bot.callbacks import Nav
 from bot.db import repo
 from bot.db.models import PaymentStatus, User
 from bot.keyboards import (
-    back_to_menu_kb,
     feedback_kind_kb,
+    help_kb,
     main_menu_kb,
     payment_list_kb,
     settings_kb,
@@ -63,7 +63,7 @@ async def cmd_start(message: Message, state: FSMContext, user: User) -> None:
 @router.message(Command("help"))
 async def cmd_help(message: Message, state: FSMContext) -> None:
     await _interrupt(message, state)
-    await message.answer(texts.HELP, reply_markup=back_to_menu_kb())
+    await message.answer(texts.HELP, reply_markup=help_kb())
 
 
 @router.message(Command("menu"))
@@ -125,9 +125,9 @@ async def nav_menu(cb: CallbackQuery, state: FSMContext) -> None:
 @router.callback_query(Nav.filter(F.action == "help"))
 async def nav_help(cb: CallbackQuery) -> None:
     try:
-        await cb.message.edit_text(texts.HELP, reply_markup=back_to_menu_kb())
+        await cb.message.edit_text(texts.HELP, reply_markup=help_kb())
     except TelegramBadRequest:
-        await cb.message.answer(texts.HELP, reply_markup=back_to_menu_kb())
+        await cb.message.answer(texts.HELP, reply_markup=help_kb())
     await cb.answer()
 
 

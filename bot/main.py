@@ -16,6 +16,7 @@ from bot.handlers import (
     add_payment,
     commands,
     edit_payment,
+    faq,
     feedback,
     list_payments,
     onboarding,
@@ -58,6 +59,7 @@ def build_dispatcher() -> Dispatcher:
     dp.include_router(feedback.router)
     dp.include_router(settings_handler.router)
     dp.include_router(payment_methods.router)
+    dp.include_router(faq.router)
     dp.include_router(commands.fallback_router)
     return dp
 
