@@ -20,7 +20,7 @@ from bot.keyboards import (
     status_menu_kb,
     tz_kb,
 )
-from bot.states import AddPayment, FeedbackFSM, Onboarding
+from bot.states import FeedbackFSM, Onboarding
 
 router = Router(name="commands")
 fallback_router = Router(name="fallback")
@@ -97,8 +97,9 @@ async def cmd_list(message: Message, state: FSMContext, session, user: User) -> 
 @router.message(Command("add"))
 async def cmd_add(message: Message, state: FSMContext) -> None:
     await _interrupt(message, state)
-    await state.set_state(AddPayment.title)
-    await message.answer(texts.ADD_TITLE)
+    from bot.handlers.add_payment import _begin  # ленивый импорт — избегаем цикла
+
+    await _begin(message, state)
 
 
 @router.message(Command("feedback"))

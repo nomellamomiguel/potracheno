@@ -23,6 +23,7 @@ from bot.callbacks import (
     TimeCB,
     ToggleCB,
     WizardCB,
+    WizardNavCB,
 )
 from bot.db.repo import MAX_PAYMENT_METHODS
 from bot.services.dates import RU_MONTHS, RU_WEEKDAYS
@@ -318,7 +319,7 @@ def method_delete_confirm_kb(method_id: int) -> InlineKeyboardMarkup:
 
 
 def add_method_kb(methods) -> InlineKeyboardMarkup:
-    """Шаг мастера /add: выбор способа оплаты (встроенные + свои + пропустить/назад)."""
+    """Шаг мастера /add: выбор способа оплаты (встроенные + свои + пропустить)."""
     b = InlineKeyboardBuilder()
     b.button(text="💵 Наличные", callback_data=AddMethodCB(value="cash"))
     b.button(text="💳 Карта/трансфер", callback_data=AddMethodCB(value="card"))
@@ -327,6 +328,32 @@ def add_method_kb(methods) -> InlineKeyboardMarkup:
     if len(methods) < MAX_PAYMENT_METHODS:
         b.button(text="➕ Добавить способ оплаты", callback_data=AddMethodCB(value="add"))
     b.button(text="⏭ Пропустить", callback_data=AddMethodCB(value="skip"))
-    b.button(text="⬅️ Назад", callback_data=AddMethodCB(value="back"))
     b.adjust(1)
+    return b.as_markup()
+
+
+def with_nav(markup: InlineKeyboardMarkup, *, back: bool, cancel: bool = True) -> InlineKeyboardMarkup:
+    """Добавляет к готовой клавиатуре ряд навигации мастера: «⬅️ Назад» / «✖️ Отменить»."""
+    b = InlineKeyboardBuilder()
+    for row in markup.inline_keyboard:
+        b.row(*row)
+    nav: list[InlineKeyboardButton] = []
+    if back:
+        nav.append(InlineKeyboardButton(text="⬅️ Назад", callback_data=WizardNavCB(action="back").pack()))
+    if cancel:
+        nav.append(InlineKeyboardButton(text="✖️ Отменить", callback_data=WizardNavCB(action="cancel").pack()))
+    if nav:
+        b.row(*nav)
+    return b.as_markup()
+
+
+def wizard_nav_kb(back: bool, *, cancel: bool = True) -> InlineKeyboardMarkup:
+    """Клавиатура только с навигацией мастера — для текстовых шагов."""
+    b = InlineKeyboardBuilder()
+    nav: list[InlineKeyboardButton] = []
+    if back:
+        nav.append(InlineKeyboardButton(text="⬅️ Назад", callback_data=WizardNavCB(action="back").pack()))
+    if cancel:
+        nav.append(InlineKeyboardButton(text="✖️ Отменить", callback_data=WizardNavCB(action="cancel").pack()))
+    b.row(*nav)
     return b.as_markup()

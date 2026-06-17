@@ -78,4 +78,8 @@ class MethodCB(CallbackData, prefix="pm"):
 
 
 class AddMethodCB(CallbackData, prefix="amt"):
-    value: str  # cash | card | skip | back | add | "<method_id>" (id своего способа)
+    value: str  # cash | card | skip | add | "<method_id>" (id своего способа)
+
+
+class WizardNavCB(CallbackData, prefix="wnav"):
+    action: str  # back | cancel  — навигация в мастере /add
