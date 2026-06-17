@@ -2,7 +2,6 @@
 from __future__ import annotations
 
 from aiogram import Bot, F, Router
-from aiogram.filters import Command
 from aiogram.fsm.context import FSMContext
 from aiogram.types import CallbackQuery, Message
 
@@ -23,12 +22,6 @@ async def fb_start_cb(cb: CallbackQuery, state: FSMContext) -> None:
     await state.set_state(FeedbackFSM.kind)
     await cb.message.answer(texts.FEEDBACK_KIND, reply_markup=feedback_kind_kb())
     await cb.answer()
-
-
-@router.message(Command("feedback"))
-async def fb_start_cmd(message: Message, state: FSMContext) -> None:
-    await state.set_state(FeedbackFSM.kind)
-    await message.answer(texts.FEEDBACK_KIND, reply_markup=feedback_kind_kb())
 
 
 @router.callback_query(FeedbackFSM.kind, FeedbackKindCB.filter())

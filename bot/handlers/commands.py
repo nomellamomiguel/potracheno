@@ -9,9 +9,18 @@ from aiogram.types import CallbackQuery, Message
 
 from bot import texts
 from bot.callbacks import Nav
-from bot.db.models import User
-from bot.keyboards import back_to_menu_kb, main_menu_kb, tz_kb
-from bot.states import Onboarding
+from bot.db import repo
+from bot.db.models import PaymentStatus, User
+from bot.keyboards import (
+    back_to_menu_kb,
+    feedback_kind_kb,
+    main_menu_kb,
+    payment_list_kb,
+    settings_kb,
+    status_menu_kb,
+    tz_kb,
+)
+from bot.states import AddPayment, FeedbackFSM, Onboarding
 
 router = Router(name="commands")
 fallback_router = Router(name="fallback")
@@ -35,6 +44,13 @@ async def start_onboarding(message: Message, state: FSMContext) -> None:
     await message.answer(texts.ASK_TZ, reply_markup=tz_kb())
 
 
+async def _interrupt(message: Message, state: FSMContext) -> None:
+    """Если пользователь в активном FSM-состоянии — прервать его с уведомлением."""
+    if await state.get_state() is not None:
+        await state.clear()
+        await message.answer(texts.INTERRUPTED)
+
+
 @router.message(CommandStart())
 async def cmd_start(message: Message, state: FSMContext, user: User) -> None:
     await state.clear()
@@ -45,13 +61,51 @@ async def cmd_start(message: Message, state: FSMContext, user: User) -> None:
 
 
 @router.message(Command("help"))
-async def cmd_help(message: Message) -> None:
+async def cmd_help(message: Message, state: FSMContext) -> None:
+    await _interrupt(message, state)
     await message.answer(texts.HELP, reply_markup=back_to_menu_kb())
 
 
 @router.message(Command("menu"))
-async def cmd_menu(message: Message) -> None:
+async def cmd_menu(message: Message, state: FSMContext) -> None:
+    await _interrupt(message, state)
     await show_main_menu(message)
+
+
+@router.message(Command("settings"))
+async def cmd_settings(message: Message, state: FSMContext) -> None:
+    await _interrupt(message, state)
+    await message.answer(texts.SETTINGS_MENU, reply_markup=settings_kb())
+
+
+@router.message(Command("status"))
+async def cmd_status(message: Message, state: FSMContext) -> None:
+    await _interrupt(message, state)
+    await message.answer(texts.STATUS_MENU, reply_markup=status_menu_kb())
+
+
+@router.message(Command("list"))
+async def cmd_list(message: Message, state: FSMContext, session, user: User) -> None:
+    await _interrupt(message, state)
+    payments = await repo.list_payments(
+        session, user.id, statuses=(PaymentStatus.active, PaymentStatus.paused)
+    )
+    text = texts.LIST_TITLE if payments else texts.NO_PAYMENTS
+    await message.answer(text, reply_markup=payment_list_kb(payments))
+
+
+@router.message(Command("add"))
+async def cmd_add(message: Message, state: FSMContext) -> None:
+    await _interrupt(message, state)
+    await state.set_state(AddPayment.title)
+    await message.answer(texts.ADD_TITLE)
+
+
+@router.message(Command("feedback"))
+async def cmd_feedback(message: Message, state: FSMContext) -> None:
+    await _interrupt(message, state)
+    await state.set_state(FeedbackFSM.kind)
+    await message.answer(texts.FEEDBACK_KIND, reply_markup=feedback_kind_kb())
 
 
 @router.message(Command("cancel"))

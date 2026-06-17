@@ -3,7 +3,6 @@ from __future__ import annotations
 
 from aiogram import F, Router
 from aiogram.exceptions import TelegramBadRequest
-from aiogram.filters import Command
 from aiogram.fsm.context import FSMContext
 from aiogram.types import CallbackQuery, Message
 
@@ -55,12 +54,6 @@ async def _show_card(cb: CallbackQuery, payment: Payment) -> None:
     except TelegramBadRequest:
         await cb.message.answer(payment_card(payment), reply_markup=payment_card_kb(payment))
     await cb.answer()
-
-
-@router.message(Command("list"))
-async def cmd_list(message: Message, state: FSMContext, session, user: User) -> None:
-    await state.clear()
-    await _render_list(message, session, user)
 
 
 @router.callback_query(Nav.filter(F.action == "list"))

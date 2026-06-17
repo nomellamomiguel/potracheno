@@ -6,7 +6,6 @@ from types import SimpleNamespace
 
 from aiogram import F, Router
 from aiogram.exceptions import TelegramBadRequest
-from aiogram.filters import Command
 from aiogram.fsm.context import FSMContext
 from aiogram.types import CallbackQuery, Message
 
@@ -73,11 +72,6 @@ async def _begin(event: Message | CallbackQuery, state: FSMContext) -> None:
 @router.callback_query(Nav.filter(F.action == "add"))
 async def add_from_menu(cb: CallbackQuery, state: FSMContext) -> None:
     await _begin(cb, state)
-
-
-@router.message(Command("add"))
-async def add_from_cmd(message: Message, state: FSMContext) -> None:
-    await _begin(message, state)
 
 
 @router.message(AddPayment.title)

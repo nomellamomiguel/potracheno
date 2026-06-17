@@ -6,7 +6,6 @@ import datetime as dt
 
 from aiogram import F, Router
 from aiogram.exceptions import TelegramBadRequest
-from aiogram.filters import Command
 from aiogram.fsm.context import FSMContext
 from aiogram.types import CallbackQuery, Message
 
@@ -32,12 +31,6 @@ async def _show_menu(event: Message | CallbackQuery) -> None:
         await event.answer()
     else:
         await event.answer(texts.STATUS_MENU, reply_markup=status_menu_kb())
-
-
-@router.message(Command("status"))
-async def cmd_status(message: Message, state: FSMContext) -> None:
-    await state.clear()
-    await _show_menu(message)
 
 
 @router.callback_query(Nav.filter(F.action == "status"))
