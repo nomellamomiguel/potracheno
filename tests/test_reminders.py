@@ -85,16 +85,34 @@ async def test_monthly_advance(session):
 async def test_ignored_reminder_keeps_active_on_roll(session):
     """Нет ответа на напоминание = платёж в силе: roll переносит дату, не архивирует."""
     user = await _user(session)
-    past = dt.date.today() - dt.timedelta(days=400)
+    today = dt.date(2026, 7, 3)
     p = Payment(
         user_id=user.id, title="Подписка", currency="EUR", amount_minor=999,
-        freq=Freq.month, by_monthdays=[1], anchor_date=past,
-        next_due_date=dt.date.today() - dt.timedelta(days=5),  # просрочено, не оплачено
+        freq=Freq.month, by_monthdays=[1], anchor_date=dt.date(2025, 1, 1),
+        next_due_date=today - dt.timedelta(days=5),  # просрочено, не оплачено
         reminder_offsets=[{"days": 1}], status=PaymentStatus.active,
     )
     session.add(p)
     await session.flush()
 
-    await rsvc.roll_payment(session, p, user)
+    await rsvc.roll_payment(session, p, user, today=today)
     assert p.status == PaymentStatus.active
-    assert p.next_due_date is not None and p.next_due_date >= dt.date.today()
+    assert p.next_due_date == dt.date(2026, 8, 1)
+
+
+async def test_roll_catches_up_after_long_downtime(session):
+    """Долгий простой бота: roll за один прогон догоняет дату до ближайшей на/после today."""
+    user = await _user(session)
+    today = dt.date(2026, 7, 3)
+    p = Payment(
+        user_id=user.id, title="Подписка", currency="EUR", amount_minor=999,
+        freq=Freq.month, by_monthdays=[1], anchor_date=dt.date(2025, 1, 1),
+        next_due_date=dt.date(2026, 4, 1),  # просрочка ~3 месяца
+        reminder_offsets=[{"days": 1}], status=PaymentStatus.active,
+    )
+    session.add(p)
+    await session.flush()
+
+    await rsvc.roll_payment(session, p, user, today=today)
+    assert p.status == PaymentStatus.active
+    assert p.next_due_date == dt.date(2026, 8, 1)

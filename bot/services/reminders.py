@@ -115,9 +115,11 @@ async def snooze_payment(
     return sched
 
 
-async def roll_payment(session: AsyncSession, payment: Payment, user: User) -> None:
+async def roll_payment(
+    session: AsyncSession, payment: Payment, user: User, *, today: dt.date | None = None
+) -> None:
     """Ежедневный roll: подтянуть просроченные/пустые next_due и напоминания."""
-    today = dt.date.today()
+    today = today or dt.date.today()
     due = payment.next_due_date
     if due is None:
         nd = next_due_for_payment(payment, after=today - dt.timedelta(days=1))
@@ -127,7 +129,7 @@ async def roll_payment(session: AsyncSession, payment: Payment, user: User) -> N
         else:
             await materialize_occurrence(session, payment, user, nd)
     elif due < today:
-        nd = next_due_for_payment(payment, after=due)
+        nd = next_due_for_payment(payment, after=today - dt.timedelta(days=1))
         payment.next_due_date = nd
         if nd is None:
             payment.status = PaymentStatus.archived
