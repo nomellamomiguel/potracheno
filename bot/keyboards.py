@@ -47,7 +47,7 @@ def main_menu_kb() -> InlineKeyboardMarkup:
     b.button(text="📊 Статус", callback_data=Nav(action="status"))
     b.button(text="⚙️ Настройки", callback_data=Nav(action="settings"))
     b.button(text="✉️ Обратная связь", callback_data=Nav(action="feedback"))
-    b.button(text="❓ Помощь", callback_data=Nav(action="help"))
+    b.button(text="🧭 Навигация", callback_data=Nav(action="help"))
     b.button(text="💡 Помощь и советы", callback_data=FaqCB(section="intro"))
     b.adjust(1, 2, 2, 2)
     return b.as_markup()
